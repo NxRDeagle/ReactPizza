@@ -6,7 +6,7 @@ const NotFound = () => {
   return (
     <>
       <NotFoundBlock />
-      <button>Назад</button>
+      <button className="button button--cart">Назад</button>
     </>
   );
 };

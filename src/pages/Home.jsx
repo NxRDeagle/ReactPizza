@@ -1,5 +1,10 @@
 import React from 'react';
-import axios from 'axios';
+import qs from 'qs';
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+
+import { setCategoryId, setCurrentPage, setFilters } from '../redux/slices/filterSlice';
+import { fetchPizzas } from '../redux/slices/pizzaSlice.js';
 
 import Categories from '../components/Categories';
 import Sort from '../components/Sort';
@@ -8,37 +13,74 @@ import Skeleton from '../components/PizzaBlock/Skeleton';
 import Pagination from '../components/Pagination';
 
 import { SearchContext } from '../App';
+import { sortingCategories } from '../components/Sort';
 
 const Home = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { categoryId, sort, currentPage } = useSelector((state) => state.filter);
+  const { items, status } = useSelector((state) => state.pizza);
+
+  const isSearch = React.useRef(false);
+  const isMounted = React.useRef(false);
+
+  const onChangeCategory = (id) => {
+    dispatch(setCategoryId(id));
+  };
+
+  const onChangePage = (number) => {
+    dispatch(setCurrentPage(number));
+  };
+
   const { searchValue } = React.useContext(SearchContext);
 
-  const [items, setItems] = React.useState([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [activeCategory, setActiveCategory] = React.useState(0);
-  const [activeSort, setActiveSort] = React.useState({
-    name: 'популярности',
-    sortProperty: 'rating',
-  });
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const getPizzas = async () => {
+    const sortBy = sort.sortProperty.replace('-', '');
+    const order = sort.sortProperty.includes('-') ? 'asc' : 'desc';
+    const category = categoryId > 0 ? `category=${categoryId}` : '';
+    const search = searchValue ? `&search=${searchValue}` : '';
 
-  React.useEffect(() => {
-    setIsLoading(true);
+    dispatch(fetchPizzas({ sortBy, order, category, search, currentPage }));
 
-    const order = activeSort.sortProperty.includes('-') ? 'asc' : 'desc';
-    const sortBy = activeSort.sortProperty.replace('-', '');
-    const category = activeCategory > 0 ? `category=${activeCategory}` : ``;
-    const search = searchValue ? `search=${searchValue}` : ``;
-
-    axios
-      .get(
-        `https://63d55dc1c52305feff7304ee.mockapi.io/items?page=${currentPage}&limit=4${category}&sortby=${sortBy}&order=${order}${search}`,
-      )
-      .then((res) => {
-        setItems(res.data);
-        setIsLoading(false);
-      });
     window.scrollTo(0, 0);
-  }, [activeCategory, activeSort, searchValue, currentPage]);
+  };
+
+  // Если был первый рендер, то производим запрос данных
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+
+    if (!isSearch.current) {
+      getPizzas();
+    }
+
+    isSearch.current = false;
+  }, [sort.sortProperty, categoryId, currentPage, searchValue]);
+
+  // Если был первый рендер, то проверяем URL-параметры и сохраняем их в Redux
+  React.useEffect(() => {
+    if (window.location.search) {
+      const params = qs.parse(window.location.search.substring(1));
+
+      const sort = sortingCategories.find((obj) => obj.sortProperty === params.sortProperty);
+      dispatch(setFilters({ ...params, sort }));
+      isSearch.current = true;
+    }
+  }, []);
+
+  // Если был первый рендер, и мы изменили параметры
+  React.useEffect(() => {
+    if (isMounted.current) {
+      const queryString = qs.stringify({
+        sortProperty: sort.sortProperty,
+        categoryId,
+        currentPage,
+      });
+
+      navigate(`?${queryString}`);
+    }
+    isMounted.current = true;
+  }, [sort.sortProperty, categoryId, currentPage, searchValue]);
 
   const pizzas = items
     .filter((item) => item.title.toLowerCase().includes(searchValue.toLowerCase()))
@@ -48,15 +90,24 @@ const Home = () => {
   return (
     <>
       <div className="content__top">
-        <Categories
-          activeCategory={activeCategory}
-          onClickCategory={(index) => setActiveCategory(index)}
-        />
-        <Sort activeSort={activeSort} onClickSort={(sortItem) => setActiveSort(sortItem)} />
+        <Categories activeCategory={categoryId} onClickCategory={onChangeCategory} />
+        <Sort />
       </div>
       <h2 className="content__title">Все пиццы</h2>
-      <div className="content__items">{isLoading ? skeletons : pizzas}</div>
-      <Pagination onChangePage={(page) => setCurrentPage(page)} />
+      {status === 'error' ? (
+        <div className="content__error-info">
+          <h2>Корзина пустая 😕</h2>
+          <p>
+            Вероятней всего, вы ещё не заказывали пиццу.
+            <br />
+            Для того, чтобы заказать пиццу, перейдите на главную страницу.
+          </p>
+        </div>
+      ) : (
+        <div className="content__items">{status === 'loading' ? skeletons : pizzas}</div>
+      )}
+
+      <Pagination currentPage={currentPage} onChangePage={onChangePage} />
     </>
   );
 };
