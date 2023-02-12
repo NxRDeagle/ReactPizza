@@ -1,10 +1,12 @@
 import React from 'react';
 import qs from 'qs';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { setCategoryId, setCurrentPage, setFilters } from '../redux/slices/filterSlice';
 import { fetchPizzas } from '../redux/slices/pizzaSlice.js';
+import { selectPizzaData } from '../redux/slices/pizzaSlice.js';
+import { selectFilter } from '../redux/slices/filterSlice';
 
 import Categories from '../components/Categories';
 import Sort from '../components/Sort';
@@ -12,15 +14,14 @@ import PizzaBlock from '../components/PizzaBlock';
 import Skeleton from '../components/PizzaBlock/Skeleton';
 import Pagination from '../components/Pagination';
 
-import { SearchContext } from '../App';
 import { sortingCategories } from '../components/Sort';
 
 const Home = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { categoryId, sort, currentPage } = useSelector((state) => state.filter);
-  const { items, status } = useSelector((state) => state.pizza);
+  const { categoryId, sort, currentPage, searchValue } = useSelector(selectFilter);
+  const { items, status } = useSelector(selectPizzaData);
 
   const isSearch = React.useRef(false);
   const isMounted = React.useRef(false);
@@ -32,8 +33,6 @@ const Home = () => {
   const onChangePage = (number) => {
     dispatch(setCurrentPage(number));
   };
-
-  const { searchValue } = React.useContext(SearchContext);
 
   const getPizzas = async () => {
     const sortBy = sort.sortProperty.replace('-', '');
@@ -84,7 +83,11 @@ const Home = () => {
 
   const pizzas = items
     .filter((item) => item.title.toLowerCase().includes(searchValue.toLowerCase()))
-    .map((obj) => <PizzaBlock {...obj} key={obj.id} />);
+    .map((obj) => (
+      <Link to={`/pizza/${obj.id}`} key={obj.id}>
+        <PizzaBlock {...obj} />
+      </Link>
+    ));
   const skeletons = [...new Array(8)].map((obj, index) => <Skeleton key={index} />);
 
   return (

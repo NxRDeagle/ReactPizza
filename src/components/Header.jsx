@@ -7,12 +7,11 @@ import Search from './Search';
 import '../scss/components/_header.scss';
 import logoSvg from '../assets/img/pizza-logo.svg';
 
-import { SearchContext } from '../App';
+import { selectCart } from '../redux/slices/cartSlice';
 
 function Header() {
   const location = useLocation();
-  const { items, totalPrice } = useSelector((state) => state.cart);
-  const { searchValue, setSearchValue } = React.useContext(SearchContext);
+  const { items, totalPrice } = useSelector(selectCart);
 
   const totalCount = items.reduce((sum, obj) => sum + obj.count, 0);
 
@@ -28,7 +27,7 @@ function Header() {
             </div>
           </div>
         </Link>
-        <Search searchValue={searchValue} setSearchValue={setSearchValue} />
+        <Search />
         <div className="header__cart">
           {location.pathname !== '/cart' && (
             <Link to="/cart" className="button button--cart">
