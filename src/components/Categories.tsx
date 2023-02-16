@@ -2,7 +2,12 @@ import React from 'react';
 
 import '../scss/components/_categories.scss';
 
-function Categories({ activeCategory, onClickCategory }) {
+type CategoriesProps = {
+  activeCategory: number;
+  onClickCategory: (id: number) => void;
+};
+
+const Categories: React.FC<CategoriesProps> = ({ activeCategory, onClickCategory }) => {
   const categories = ['Все', 'Мясные', 'Вегетарианские', 'Гриль', 'Острые', 'Закрытые'];
 
   return (
@@ -19,6 +24,6 @@ function Categories({ activeCategory, onClickCategory }) {
       </ul>
     </div>
   );
-}
+};
 
 export default Categories;

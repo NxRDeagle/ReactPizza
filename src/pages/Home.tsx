@@ -16,7 +16,7 @@ import Pagination from '../components/Pagination';
 
 import { sortingCategories } from '../components/Sort';
 
-const Home = () => {
+const Home: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -26,12 +26,12 @@ const Home = () => {
   const isSearch = React.useRef(false);
   const isMounted = React.useRef(false);
 
-  const onChangeCategory = (id) => {
+  const onChangeCategory = (id: number) => {
     dispatch(setCategoryId(id));
   };
 
-  const onChangePage = (number) => {
-    dispatch(setCurrentPage(number));
+  const onChangePage = (page: number) => {
+    dispatch(setCurrentPage(page));
   };
 
   const getPizzas = async () => {
@@ -40,7 +40,10 @@ const Home = () => {
     const category = categoryId > 0 ? `category=${categoryId}` : '';
     const search = searchValue ? `&search=${searchValue}` : '';
 
-    dispatch(fetchPizzas({ sortBy, order, category, search, currentPage }));
+    dispatch(
+      // @ts-ignore
+      fetchPizzas({ sortBy, order, category, search, currentPage }),
+    );
 
     window.scrollTo(0, 0);
   };
@@ -82,8 +85,8 @@ const Home = () => {
   }, [sort.sortProperty, categoryId, currentPage, searchValue]);
 
   const pizzas = items
-    .filter((item) => item.title.toLowerCase().includes(searchValue.toLowerCase()))
-    .map((obj) => (
+    .filter((item: any) => item.title.toLowerCase().includes(searchValue.toLowerCase()))
+    .map((obj: any) => (
       <Link to={`/pizza/${obj.id}`} key={obj.id}>
         <PizzaBlock {...obj} />
       </Link>

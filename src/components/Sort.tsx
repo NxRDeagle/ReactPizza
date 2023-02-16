@@ -5,7 +5,12 @@ import { selectSort, setSort } from '../redux/slices/filterSlice';
 
 import '../scss/components/_sort.scss';
 
-export const sortingCategories = [
+type SortItem = {
+  name: string;
+  sortProperty: string;
+};
+
+export const sortingCategories: SortItem[] = [
   { name: 'популярности (DESC)', sortProperty: 'rating' },
   { name: 'популярности (ASC)', sortProperty: '-rating' },
   { name: 'цене (DESC)', sortProperty: 'price' },
@@ -16,14 +21,17 @@ export const sortingCategories = [
 
 function Sort() {
   const dispatch = useDispatch();
-  const sort = useSelector(selectSort);
-  const sortRef = React.useRef();
+  const sort: SortItem = useSelector(selectSort);
+  const sortRef = React.useRef<HTMLDivElement>(null);
 
   const [isOpen, setIsOpen] = React.useState(false);
 
   React.useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.path.includes(sortRef.current)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      const _event = event as MouseEvent & {
+        path: Node[];
+      };
+      if (sortRef.current && !_event.path.includes(sortRef.current)) {
         setIsOpen(false);
       }
     };
@@ -52,10 +60,10 @@ function Sort() {
       {isOpen && (
         <div className="sort__popup">
           <ul>
-            {sortingCategories.map((item, index) => (
+            {sortingCategories.map((item: SortItem, index: number) => (
               <li
                 key={index}
-                onClick={() => {
+                onClick={(item) => {
                   dispatch(setSort(item));
                   setIsOpen(false);
                 }}
